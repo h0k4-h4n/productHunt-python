@@ -17,13 +17,22 @@ def signup(request):
         else:
             return render(request, 'accounts/signup.html', {'err': 'Passwords must match'})
     else:
-        #signup page
-        print()
-    return render(request, 'accounts/signup.html')
+        return render(request, 'accounts/signup.html')
 
 def login(request):
-    return render(request, 'accounts/login.html')
+    if request.method == 'POST':
+        user = auth.authenticate(username=request.POST['username'], password=request.POST['password'])
+        if user != None:
+            auth.login(request, user=user)
+            return redirect('home')
+        else:
+            return render(request, 'accounts/login.html', {'err': 'User not found'})
+    else:
+        return render(request, 'accounts/login.html')
 
 def logout(request):
     #TODO redirect to homepage and logout
+    if request.method == 'POST':
+        auth.logout(request)
+        return redirect('home')
     return render(request, 'accounts/logout.html')
