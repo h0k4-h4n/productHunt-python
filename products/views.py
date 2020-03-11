@@ -1,14 +1,17 @@
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.decorators import login_required
 from django.http import HttpResponse
 from .models import Product
 from django.utils import timezone
 
+
+
 # Create your views here.
 def home(request):
-    return render(request, 'products/home.html')
+    products = Product.objects
+    return render(request, 'products/home.html', {'products': products})
 
-@login_required
+@login_required(login_url="/accounts/signup")
 def create(request):
     if request.method == 'POST':
         if request.POST['title'] and request.POST['body'] and request.POST['url'] and request.FILES.get('icon', False) and request.FILES.get('image', False):
@@ -25,8 +28,20 @@ def create(request):
             product.votes_total = 1
             product.hunter = request.user
             product.save()
-            return redirect('home')
+            return redirect('/products/' + str(product.id))
         else:
             return render(request, 'products/create.html', {'err': 'All fields are required'})
     else:
         return render(request, 'products/create.html')
+
+def detail(request, product_id):
+    product = get_object_or_404(Product, pk=product_id)
+    return render(request, 'products/detail.html', {'product': product})
+
+@login_required(login_url="/accounts/signup")
+def upvote(request, product_id):
+    if request.method == 'POST':
+        product = get_object_or_404(Product, pk=product_id)
+        product.votes_total += 1
+        product.save()
+        return redirect('/products/' + str(product.id))
